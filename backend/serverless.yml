@@ -1,0 +1,25 @@
+service: codeinspire
+
+frameworkVersion: '3'
+
+plugins:
+  - serverless-python-requirements
+
+provider:
+  name: aws
+  memorySize: 256
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'sa-east-1'}
+
+
+functions:
+  scheduleTipGenerator:
+    handler: src.tip_generator.handler.run
+    runtime: python3.10
+    events:
+      - schedule: rate(5 minutes)
+
+  # cronHandler:
+  #   handler: src.tip_generator.handler.run
+  #   events:
+  #     - schedule: cron(0/2 * ? * MON-FRI *)
