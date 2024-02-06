@@ -1,12 +1,14 @@
 service: codeinspire
 
-frameworkVersion: '3'
+package:
+  individually: true
 
 plugins:
   - serverless-python-requirements
+  - serverless-bundle
 
 custom:
-  AuctionsTable:
+  TipsTable:
     name: !Ref tipsTable
     arn: !GetAtt tipsTable.Arn
 
@@ -18,11 +20,12 @@ provider:
   iamRoleStatements:
     - Effect: 'Allow'
       Action:
-        - dynamodb:PutItem 
+        - dynamodb:PutItem
+        - dynamodb:Scan
       Resource: 
-        - ${self:custom.AuctionsTable.arn}
+        - ${self:custom.TipsTable.arn}
   environment:
-    DYNAMODB_TABLE_NAME: ${self:custom.AuctionsTable.name}
+    DYNAMODB_TABLE_NAME: ${self:custom.TipsTable.name}
 
 resources:
   Resources:
@@ -43,8 +46,18 @@ resources:
 
 functions:
   scheduleTipGenerator:
-    handler: src.tip_generator.handler.run
+    handler: src/tip_generator/handler.run
     runtime: python3.10
-    events:
-      - schedule: cron(0 0 * * SUN *) 
+    events:     
+      - schedule: cron(0 0 ? * SUN *) 
     timeout: 30
+
+  getTips:
+    handler: src/api/handlers/getTips.handler
+    runtime: nodejs18.x
+    events:
+      - http:
+          method: GET
+          path: /tips
+
+  

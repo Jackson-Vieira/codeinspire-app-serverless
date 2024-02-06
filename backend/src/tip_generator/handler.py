@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 import time
 
 def get_secret():
-    return "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"
+    return ""
 
 OPENAI_API_KEY = get_secret()
 
