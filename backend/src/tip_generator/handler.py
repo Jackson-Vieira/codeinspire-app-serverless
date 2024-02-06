@@ -4,15 +4,10 @@ import boto3
 
 from datetime import date
 from openai import AsyncOpenAI, OpenAIError
-
 from botocore.exceptions import ClientError
 
-import time
 
-def get_secret():
-    return ""
-
-OPENAI_API_KEY = get_secret()
+OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 PROMPT_SYSTEM = """
 Act as a programming language tip expert generator for curios peoples
@@ -27,7 +22,7 @@ JSON expected keys: key_tip, description and code_example
 include all necessary imports   the example and use code best practices.
 """
 
-def put_tip(language, tip):
+def put_tip(language: str, tip: dict):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(os.environ['DYNAMODB_TABLE_NAME'])
     try:
@@ -42,8 +37,11 @@ def put_tip(language, tip):
         print(e.response['Error']['Message'])
     return response
 
+def get_openai_client():
+    return AsyncOpenAI(api_key=OPENAI_API_KEY)
+
 async def generate_tip(language: str):
-    client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+    client = get_openai_client()
 
     result = None
     try:
@@ -73,18 +71,13 @@ async def generate_tip(language: str):
     return language, result
 
 async def generate_tips():
-    return await asyncio.gather(generate_tip("Python"), generate_tip("Javascript"), generate_tip("Go"))
+    langs = ["Python", "Javascript", "Go"]
+    return await asyncio.gather(**[generate_tip(lang) for lang in langs])
 
-def run(event, context):
-    start_time = time.time()
-    print("Start processing tips")
-
-    tips = asyncio.run(generate_tips())
-
-    print(f"Results: {tips}")
+def insert_tips(tips):
     for language, tip in tips:
         put_tip(language, tip)
 
-    end_time = time.time()
-    total_time = end_time - start_time
-    print(f"Finish processing tips {total_time}s")
+def run(event, context):
+    tips = asyncio.run(generate_tips())
+    insert_tips(tips)
