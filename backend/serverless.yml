@@ -26,6 +26,7 @@ provider:
         - ${self:custom.TipsTable.arn}
   environment:
     DYNAMODB_TABLE_NAME: ${self:custom.TipsTable.name}
+    OPENAI_API_KEY: ""
 
 resources:
   Resources:
