@@ -1,133 +1,78 @@
 <script setup lang="ts">
 import { capitalize } from 'vue';
 
-// TODO: PUT in enviroment variable
-const url = "https://dzcikln886.execute-api.sa-east-1.amazonaws.com/dev/tips"
+const TIPS_API_URL = process.env.VUE_APP_TIPS_API_URL || "https://dzcikln886.execute-api.sa-east-1.amazonaws.com/dev/tips";
 
-// TODO: Move types to a types file
 interface Tip {
-  code: string
-  description: string
-  key: string
+  code: string;
+  description: string;
+  key: string;
 }
 
 interface TipData {
-  tip_language: string
-  tip_date: string 
-  tip: Tip
+  tip_language: string;
+  tip_date: string;
+  tip: Tip;
 }
 
 const { data: tips, pending, error } = await useAsyncData<Array<TipData>>(
   'tips',
-  () => $fetch(url)
-)
+  () => $fetch(TIPS_API_URL)
+);
 
-const languages = computed(() => tips.value?.map(tip => tip.tip_language))
+const languages = computed(() => tips.value?.map(tip => tip.tip_language));
 
-const activeTab = ref(0)
+const activeTab = ref(0);
 
-function setActiveTab(index: number){
-  activeTab.value = index
+function setActiveTab(index: number) {
+  activeTab.value = index;
 }
-
-// const tips: Array<TipData> = [
-//   {
-//     language: "python",
-//     tip_date: new Date().toTimeString(),
-//     tip: {
-//       description: "",
-//       code: "",
-//       key: ""
-//     }
-//   },
-//   {
-//     language: "javascript",
-//     tip_date: new Date().toTimeString(),
-//     tip: {
-//       description: "",
-//       code: "",
-//       key: ""
-//     }
-//   },
-//   {
-//     language: "c++",
-//     tip_date: new Date().toTimeString(),
-//     tip: {
-//       description: "",
-//       code: "",
-//       key: ""
-//     }
-//   },
-//   {
-//     language: "SQL",
-//     tip_date: new Date().toTimeString(),
-//     tip: {
-//       description: "",
-//       code: "",
-//       key: ""
-//     }
-//   }
-// ]
-
-
-/* 
--- IDEA --
-- Tabs
-- Last update date (06/02/2024) (info badge in navbar)
-- Github code and documentation
-- 5 Languages (Python, Javascript, Go, Rust, C++)
-
-Styles
-- Choice a good font to website (OpenSource)
-- Dark mode and code highligth (toggler)
-- Copyrigth Made with 💚
-*/
-
-
 </script>
+
 <template>
-  <main>
-    <!-- <div v-if="pending">
-      Loading tips...
-    </div>
+  <div class="bg-zinc-900 flex flex-col text-zinc-300 h-screen">
+    <main class="flex-1">
+      <div class="max-w-screen-md mx-auto space-y-3 pt-4">
+        <h1 class="text-3xl text-center mb-8 underline underline-offset-8">
+          Weekly Tips
+        </h1>
+        
+        <div class="text-center" v-if="pending || error">
+          <p v-if="error">Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.</p>
+          <p v-else>Carregando...</p>
+        </div>
 
-    <div v-else-if="error">
-      A error ocurred when loading tips
-    </div> -->
-    <div class="max-w-screen-md mx-auto space-y-2">
-      <h1 class="text-3xl text-center">
-        Weekly Tips
-      </h1>
-      <ul class="flex justify-center gap-4">
-        <li 
-          v-for="lang, i in languages" 
-          class="outline-none hover:border-gray-700 border-transparent border-2 hover:border-current p-1 rounded-sm"
-          :class="activeTab === i && 'bg-gray-300'"
-        >
-         <button
-            @click="setActiveTab(i)" 
+        <template v-else>
+          <ul class="flex justify-center gap-4">
+            <li 
+              v-for="(lang, index) in languages" 
+              :key="index"
+              class="outline-none hover:border-zinc-600 border-transparent border-2 hover:border-current p-1 rounded-md"
+              :class="{
+                'bg-zinc-700 hover:border-transparent': activeTab === index
+              }"
+            >
+              <button @click="setActiveTab(index)">{{ capitalize(lang) }}</button>
+            </li>
+          </ul>
+
+          <div 
+            v-for="(tipData, index) in tips" 
+            :key="tipData.tip_language"
+            class="p-2"
+            v-show="index === activeTab"
           >
-            {{ capitalize(lang) }}   
-          </button>
-        </li>
-      </ul>
-
-      <div 
-          v-for="(tip_data, i) in tips" :key="tip_data.tip_language"
-          class="p-2"
-          v-show="i == activeTab"
-        >
-          <div>
-            {{ tip_data.tip.description }}
+            <div>{{ tipData.tip.description }}</div>
+            <pre class="border border-gray-500 bg-zinc-700 p-2 mt-2 rounded-md"><code>{{ tipData.tip.code }}</code></pre>
           </div>
-          <pre class="border border-gray-300 bg-gray-100 p-1 mt-2 rounded-sm"><code>{{ tip_data.tip.code }}</code></pre>
+        </template>
       </div>
-    </div>
-  </main>
-  <footer class="text-center">
-      Made with 💚 <br>
+    </main>
+    <footer class="text-center">
+      © 2024 - Made with 💚 <br>
       <a class="underline" href="">Github</a>
-  </footer>
+    </footer>
+  </div>
 </template>
 
 <style scoped>
